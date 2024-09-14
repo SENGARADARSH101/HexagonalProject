@@ -13,6 +13,32 @@ type CustomerRepositoryDb struct {
 	client *sql.DB
 }
 
+func (d CustomerRepositoryDb) FindAllActiveOrInactive(active bool) ([]Customer, *errs.AppError) {
+	findAllSql := "select * from customers where status =?"
+
+	row, err := d.client.Query(findAllSql, active)
+	if err != nil {
+		log.Println("Error while scanning customer table " + err.Error())
+		return nil, errs.NewUnExpectedError("Unexpected Databse Error")
+	}
+	customers := make([]Customer, 0)
+
+	for row.Next() {
+		var customer Customer
+		err := row.Scan(&customer.Id, &customer.Name, &customer.City, &customer.DateOfBirth, &customer.Status, &customer.ZipCode)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil, errs.NewNotFoundError("Customers Not Found")
+			} else {
+				log.Println("Error while scanning customer table " + err.Error())
+				return nil, errs.NewUnExpectedError("Unexpected DataBase Error")
+			}
+		}
+		customers = append(customers, customer)
+	}
+	return customers, nil
+}
+
 func (d CustomerRepositoryDb) FindAll() ([]Customer, *errs.AppError) {
 
 	findAllSql := "select * from customers"

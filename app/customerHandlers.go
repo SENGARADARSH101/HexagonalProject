@@ -1,6 +1,7 @@
 package app
 
 import (
+	"HexagonalProject/domain/errs"
 	"HexagonalProject/service"
 	"encoding/json"
 	"github.com/gorilla/mux"
@@ -12,7 +13,10 @@ type CustomerHandler struct {
 }
 
 func (ch *CustomerHandler) getAllCustomers(w http.ResponseWriter, r *http.Request) {
-	customers, err := ch.CustomerService.GetAllCustomer()
+	queryParams := r.URL.Query()
+	status := queryParams.Get("status")
+	customers, err := ch.getCustomers(status)
+	ch.CustomerService.GetAllCustomer()
 
 	if err != nil {
 		writeResponse(w, err.Code, err.AsMessage())
@@ -20,6 +24,16 @@ func (ch *CustomerHandler) getAllCustomers(w http.ResponseWriter, r *http.Reques
 		writeResponse(w, http.StatusOK, customers)
 	}
 
+}
+
+func (ch *CustomerHandler) getCustomers(status string) (interface{}, *errs.AppError) {
+	if status == "" {
+		return ch.CustomerService.GetAllCustomer()
+	} else if (status == "active") || (status == "inactive") {
+		return ch.CustomerService.GetAllActiveorInactiveCustomers(status == "active")
+	} else {
+		return nil, errs.NewNotFoundError("Unexpected Status Found")
+	}
 }
 
 func (ch *CustomerHandler) getCustomer(w http.ResponseWriter, r *http.Request) {

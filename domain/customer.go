@@ -14,4 +14,5 @@ type Customer struct {
 type CustomerRepository interface {
 	FindAll() ([]Customer, *errs.AppError)
 	FindById(id string) (*Customer, *errs.AppError)
+	FindAllActiveOrInactive(bool) ([]Customer, *errs.AppError)
 }
